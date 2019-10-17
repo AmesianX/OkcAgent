@@ -3,6 +3,7 @@
 	<string name="button_install">Install Now</string>
 	<string name="button_ok">OK</string>
 	<string name="button_select_key">Select Key</string>
+	<string name="channel_request">Operation requests</string>
 	<string name="channel_service">Agent services</string>
 	<string name="error_api">Error occurred when invoking crypto provider.</string>
 	<string name="error_connect">Error occurred when connecting to the crypto provider. This app requires the OpenKeychain app to function properly. Please make sure that OpenKeychain has been installed on your device.</string>
@@ -16,6 +17,7 @@
 	<string name="notification_gpg_content">Serving GPG requests&#8230;</string>
 	<string name="notification_gpg_title">GPG Agent Service</string>
 	<string name="notification_ssh_content">Serving SSH agent requests&#8230;</string>
+	<string name="notification_request_content">Click here to authorize your crypto operation.</string>
 	<string name="notification_ssh_title">SSH Agent Service</string>
 	<string name="text_error">Error</string>
 	<string name="text_has_gpg_key">GPG key selected.</string>

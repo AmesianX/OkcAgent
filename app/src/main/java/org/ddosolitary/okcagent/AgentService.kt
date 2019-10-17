@@ -4,11 +4,12 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
-import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Handler
 import android.os.IBinder
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
 import java.util.concurrent.ArrayBlockingQueue
 import kotlin.concurrent.thread
 
@@ -45,6 +46,24 @@ abstract class AgentService : Service() {
 
 	protected abstract fun runAgent(port: Int, intent: Intent)
 
+	private fun showRequest(id: Int, intent: Intent) {
+		val builder = NotificationCompat.Builder(
+			this@AgentService, getString(R.string.channel_id_request)
+		)
+		NotificationManagerCompat.from(this).notify(
+			id,
+			builder
+				.setPriority(NotificationCompat.PRIORITY_HIGH)
+				.setSmallIcon(R.drawable.ic_key)
+				.setContentTitle(getString(R.string.app_name))
+				.setContentText(getString(R.string.notification_request_content))
+				.setAutoCancel(true)
+				.setOngoing(true)
+				.setContentIntent(PendingIntent.getActivity(this, 0, intent, 0))
+				.build()
+		)
+	}
+
 	protected fun callApi(executeApi: (Intent) -> Intent?, req: Intent, port: Int): Intent? {
 		var reqIntent = req
 		while (true) {
@@ -52,7 +71,7 @@ abstract class AgentService : Service() {
 			when (resIntent.getIntExtra(EXTRA_RESULT_CODE, RESULT_CODE_ERROR)) {
 				RESULT_CODE_SUCCESS -> return resIntent
 				RESULT_CODE_USER_INTERACTION_REQUIRED -> {
-					startActivity(Intent(this, IntentRunnerActivity::class.java).apply {
+					val runnerIntent = Intent(this, IntentRunnerActivity::class.java).apply {
 						action = ACTION_RUN_PENDING_INTENT
 						flags = Intent.FLAG_ACTIVITY_NEW_TASK
 						putExtra(
@@ -66,7 +85,8 @@ abstract class AgentService : Service() {
 								putExtra(EXTRA_PROXY_PORT, port)
 							}
 						)
-					})
+					}
+					showRequest(port, runnerIntent)
 					reqIntent = threadMap[port]!!.queue.take() ?: return null
 				}
 				RESULT_CODE_ERROR -> {
@@ -82,13 +102,21 @@ abstract class AgentService : Service() {
 	override fun onCreate() {
 		super.onCreate()
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-			val channel = NotificationChannel(
-				getString(R.string.channel_id_service),
-				this.getString(R.string.channel_service),
-				NotificationManager.IMPORTANCE_MIN
+			val mgr = NotificationManagerCompat.from(this)
+			mgr.createNotificationChannel(
+				NotificationChannel(
+					getString(R.string.channel_id_service),
+					getString(R.string.channel_service),
+					NotificationManager.IMPORTANCE_MIN
+				)
 			)
-			(this.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager)
-				.createNotificationChannel(channel)
+			mgr.createNotificationChannel(
+				NotificationChannel(
+					getString(R.string.channel_id_request),
+					getString(R.string.channel_request),
+					NotificationManager.IMPORTANCE_HIGH
+				)
+			)
 		}
 	}
 
